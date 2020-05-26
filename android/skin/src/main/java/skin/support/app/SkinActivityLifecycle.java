@@ -7,7 +7,9 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import androidx.core.view.LayoutInflaterCompat;
 import android.view.LayoutInflater;
-
+import android.app.ActivityManager;
+import android.content.pm.ActivityInfo;
+import android.content.res.TypedArray;
 import java.lang.reflect.Field;
 import java.util.WeakHashMap;
 
@@ -51,6 +53,31 @@ public class SkinActivityLifecycle implements Application.ActivityLifecycleCallb
         } catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 是否是主进程
+     */
+    public static boolean isMainProcess(Context context){
+        return context.getApplicationContext().getPackageName().equals
+                (getCurrentProcessName(context));
+    }
+
+    /**
+     * 获取当前进程名
+     */
+    public static String getCurrentProcessName(Context context) {
+
+        int pid = android.os.Process.myPid();
+        String processName = "";
+        ActivityManager manager = (ActivityManager) context.getSystemService
+                (Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningAppProcessInfo process : manager.getRunningAppProcesses()) {
+            if (process.pid == pid) {
+                processName = process.processName;
+            }
+        }
+        return processName;
     }
 
     private SkinCompatDelegate getSkinDelegate(Context context) {
@@ -133,7 +160,7 @@ public class SkinActivityLifecycle implements Application.ActivityLifecycleCallb
     }
 
     private boolean isContextSkinEnable(Context context) {
-        return SkinCompatManager.getInstance().isSkinAllActivityEnable() || context instanceof SkinCompatSupportable;
+        return isMainProcess(context) && (SkinCompatManager.getInstance().isSkinAllActivityEnable() || context instanceof SkinCompatSupportable);
     }
 
     private void updateWindowBackground(Activity activity) {
