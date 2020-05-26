@@ -1,6 +1,7 @@
 package skin.support.app;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -146,9 +147,34 @@ public class SkinActivityLifecycle implements Application.ActivityLifecycleCallb
     }
 
     private boolean isContextSkinEnable(Context context) {
-        return SkinCompatManager.getInstance().isSkinAllActivityEnable()
+        return isMainProcess(context) && SkinCompatManager.getInstance().isSkinAllActivityEnable()
                 || context.getClass().getAnnotation(Skinable.class) != null
                 || context instanceof SkinCompatSupportable;
+    }
+
+    /**
+     * 是否是主进程
+     */
+    public static boolean isMainProcess(Context context){
+        return context.getApplicationContext().getPackageName().equals
+                (getCurrentProcessName(context));
+    }
+
+    /**
+     * 获取当前进程名
+     */
+    public static String getCurrentProcessName(Context context) {
+
+        int pid = android.os.Process.myPid();
+        String processName = "";
+        ActivityManager manager = (ActivityManager) context.getSystemService
+                (Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningAppProcessInfo process : manager.getRunningAppProcesses()) {
+            if (process.pid == pid) {
+                processName = process.processName;
+            }
+        }
+        return processName;
     }
 
     private class LazySkinObserver implements SkinObserver {
